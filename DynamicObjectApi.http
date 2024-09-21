@@ -1,0 +1,32 @@
+@DynamicObjectApi_HostAddress = http://localhost:5136
+@type = product
+
+POST {{DynamicObjectApi_HostAddress}}/objects?objectType={{type}}
+Accept: application/json
+Content-Type: application/json
+
+{
+  "name": "Laptop",
+  "price": 1200.00
+}
+
+###
+@id = 1
+
+GET {{DynamicObjectApi_HostAddress}}/objects/{{id}}/
+Accept: application/json
+
+###
+
+PUT {{DynamicObjectApi_HostAddress}}//objects/{{id}}
+Accept: application/json
+Content-Type: application/json
+
+{
+    "name": "Laptop-2",
+    "price": 1200.00
+}
+###
+
+DELETE {{DynamicObjectApi_HostAddress}}//objects/{{id}}
+Accept: application/json
