@@ -4,6 +4,7 @@ using DynamicObjectApi.Models;
 using DynamicObjectApi.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,7 +32,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapGet("objects/{id:int}", async (int id, ApplicationDbContext context, BusinessLogicService service) =>
+app.MapGet("objects/{id:int}", async (int id, ApplicationDbContext context) =>
     {
         var dynamicObject = await context.Objects.FindAsync(id);
         return dynamicObject;
@@ -40,8 +41,12 @@ app.MapGet("objects/{id:int}", async (int id, ApplicationDbContext context, Busi
     .WithOpenApi();
 
 app.MapPost("objects",
-        async (ApplicationDbContext context, [FromBody] JsonElement data, [FromQuery] string objectType) =>
+        async (ApplicationDbContext context, BusinessLogicService businessLogicService, [FromBody] JsonElement data,
+            [FromQuery] string objectType) =>
         {
+            var jsonData = JObject.Parse(data.GetRawText());
+            businessLogicService.ApplyBusinessRules(objectType, jsonData);
+
             var model = new DynamicObject()
             {
                 ObjectType = objectType,
