@@ -12,8 +12,11 @@
 .idea/**/dictionaries
 .idea/**/shelf
 /.idea
-/bin
-/obj
+/src/bin
+/src/obj
+test/DynamicObjectApiTests/bin
+/test/DynamicObjectApiTests/obj
+
 
 # AWS User-specific
 .idea/**/aws.xml

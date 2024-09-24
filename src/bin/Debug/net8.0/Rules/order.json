@@ -1,7 +1,0 @@
-{
-  "rules": {
-    "mustContainAtLeastOneProduct": true,
-    "totalPriceMustBePositive": true,
-    "customerMustBeValid": true
-  }
-}

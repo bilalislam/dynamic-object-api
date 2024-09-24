@@ -1,6 +1,0 @@
-{
-  "rules": {
-    "nameCannotBeEmpty": true,
-    "priceMustBePositive": true
-  }
-}
