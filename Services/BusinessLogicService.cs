@@ -1,77 +1,87 @@
+using DynamicObjectAPI.Data;
+using DynamicObjectApi.Models;
+using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
 
 namespace DynamicObjectApi.Services;
 
-public class BusinessLogicService
-{
-    private readonly Dictionary<string, JObject> _rules = new()
-    {
+public class BusinessLogicService{
+    private readonly ApplicationDbContext _context;
+
+    private readonly Dictionary<string, JObject> _rules = new(){
         { "order", JObject.Parse(File.ReadAllText("Rules/order.json")) },
         { "product", JObject.Parse(File.ReadAllText("Rules/product.json")) }
     };
 
-    public void ApplyBusinessRules(string objectType, JObject data)
-    {
+    public BusinessLogicService(ApplicationDbContext context){
+        _context = context;
+    }
+
+    public async Task ApplyBusinessRules(string objectType, JObject data){
         var rules = GetRulesForObjectType(objectType);
-        if (rules == null)
-        {
-            throw new InvalidOperationException("operation not supported");
-        }
+        if (rules != null){
+            var ruleSet = rules["rules"];
+            switch (objectType){
+                case "order":{
+                    if (ruleSet?["mustContainAtLeastOneProduct"]?.Value<bool>() == true){
+                        var products = data["products"] as JArray;
+                        if (products == null || !products.Any()){
+                            throw new ValidationException("Order must contain at least one product.");
+                        }
 
-        var ruleSet = rules["rules"];
-        switch (objectType)
-        {
-            case "order":
-            {
-                if (ruleSet?["mustContainAtLeastOneProduct"]?.Value<bool>() == true)
-                {
-                    var products = data["products"] as JArray;
-                    if (products == null || !products.Any())
-                    {
-                        throw new InvalidOperationException("Order must contain at least one product.");
+                        foreach (var product in products){
+                            var productId = product.Value<int>();
+                            var isExists = await _context.Objects.FirstOrDefaultAsync(
+                                x => x.Id == productId && x.ObjectType == "product");
+
+                            if (isExists == null){
+                                throw new ValidationException("Product does not exist.");
+                            }
+                        }
                     }
-                }
 
-                if (ruleSet?["totalPriceMustBePositive"]?.Value<bool>() == true)
-                {
-                    var totalPrice = data["total_price"]?.Value<decimal>() ?? 0;
-                    if (totalPrice <= 0)
-                    {
-                        throw new InvalidOperationException("Total price must be positive.");
+                    if (ruleSet?["totalPriceMustBePositive"]?.Value<bool>() == true){
+                        var totalPrice = data["total_price"]?.Value<decimal>() ?? 0;
+                        if (totalPrice <= 0){
+                            throw new ValidationException("Total price must be positive.");
+                        }
                     }
-                }
 
-                break;
+                    if (ruleSet?["customerMustBeValid"]?.Value<bool>() == true){
+                        var customerId = data["customer_id"]?.Value<int>() ?? 0;
+                        var isExists = await _context.Objects.FirstOrDefaultAsync(
+                            x => x.Id == customerId && x.ObjectType == "customer");
+
+                        if (isExists == null){
+                            throw new ValidationException("Customer does not exist.");
+                        }
+                    }
+
+
+                    break;
+                }
+                case "product":{
+                    if (ruleSet?["nameCannotBeEmpty"]?.Value<bool>() == true){
+                        var name = data["name"]?.Value<string>();
+                        if (string.IsNullOrWhiteSpace(name)){
+                            throw new ValidationException("Product name cannot be empty.");
+                        }
+                    }
+
+                    if (ruleSet?["priceMustBePositive"]?.Value<bool>() == true){
+                        var price = data["price"]?.Value<decimal>() ?? 0;
+                        if (price <= 0){
+                            throw new ValidationException("Product price must be positive.");
+                        }
+                    }
+
+                    break;
+                }
             }
-            case "product":
-            {
-                if (ruleSet?["nameCannotBeEmpty"]?.Value<bool>() == true)
-                {
-                    var name = data["name"]?.Value<string>();
-                    if (string.IsNullOrWhiteSpace(name))
-                    {
-                        throw new InvalidOperationException("Product name cannot be empty.");
-                    }
-                }
-
-                if (ruleSet?["priceMustBePositive"]?.Value<bool>() == true)
-                {
-                    var price = data["price"]?.Value<decimal>() ?? 0;
-                    if (price <= 0)
-                    {
-                        throw new InvalidOperationException("Product price must be positive.");
-                    }
-                }
-
-                break;
-            }
-            default:
-                throw new InvalidOperationException("valid rules not found");
         }
     }
 
-    private JObject GetRulesForObjectType(string objectType)
-    {
+    private JObject GetRulesForObjectType(string objectType){
         return _rules.TryGetValue(objectType, out var rule) ? rule : null!;
     }
 }
