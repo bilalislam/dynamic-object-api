@@ -3,7 +3,7 @@
 # todo:
 1. [ ] transaction management
 2. [x] validation
-3. [ ] error handling
+3. [x] error handling
 4. [ ] unit testing
 
 <span style="color:white;">https://medium.com/@devran.erogul/no-code-ve-low-code-geli%C5%9Ftirme-nedir-bd09429d3304</span>
