@@ -1,8 +1,7 @@
 using System.Text.Json;
-using DynamicObjectAPI.Data;
-using DynamicObjectApi.Middlewares;
-using DynamicObjectApi.Models;
-using DynamicObjectApi.Services;
+using DynamicObjectApi.Application;
+using DynamicObjectApi.Domain;
+using DynamicObjectApi.Infrastructure;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
@@ -15,7 +14,8 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddScoped<BusinessLogicService>();
+builder.Services.AddScoped<IRuleEngineStrategy, RuleEngineStrategy>();
+builder.Services.AddScoped<IBusinessLogicService, BusinessLogicService>();
 
 var app = builder.Build();
 
@@ -33,15 +33,17 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 
 app.MapGet($"objects/{{id:int}}/type/{{type}}",
-        async (int id, string type, ApplicationDbContext context) => {
+        async (int id, string type,
+            ApplicationDbContext context) => {
             return await context.Objects.FirstOrDefaultAsync(x => x.Id == id && x.ObjectType == type);
         })
     .WithName("getObjectById")
     .WithOpenApi();
 
 app.MapPost("objects",
-        async (ApplicationDbContext context, BusinessLogicService businessLogicService, [FromBody] JsonElement data,
-            [FromQuery] string objectType) => {
+        async ([FromBody] JsonElement data, [FromQuery] string objectType,
+            ApplicationDbContext context,
+            IBusinessLogicService businessLogicService) => {
             var jsonData = JObject.Parse(data.GetRawText());
             await businessLogicService.ApplyBusinessRules(objectType, jsonData);
 
@@ -57,7 +59,7 @@ app.MapPost("objects",
 
 app.MapPut("objects/{id:int}/type/{{type}}", async (int id, string type, [FromBody] JsonElement data,
         ApplicationDbContext context,
-        BusinessLogicService businessLogicService) => {
+        IBusinessLogicService businessLogicService) => {
         var jsonData = JObject.Parse(data.GetRawText());
         await businessLogicService.ApplyBusinessRules(type, jsonData);
 
@@ -72,7 +74,8 @@ app.MapPut("objects/{id:int}/type/{{type}}", async (int id, string type, [FromBo
     .WithName("updateObjectById")
     .WithOpenApi();
 
-app.MapDelete("objects/{id:int}", async (int id, ApplicationDbContext context) => {
+app.MapDelete("objects/{id:int}", async (int id,
+        ApplicationDbContext context) => {
         var dynamicObject = await context.Objects.FindAsync(id);
         if (dynamicObject != null) context.Objects.Remove(dynamicObject);
         await context.SaveChangesAsync();

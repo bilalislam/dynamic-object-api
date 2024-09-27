@@ -1,7 +1,7 @@
 using System.Net;
-using DynamicObjectApi.Models;
+using DynamicObjectApi.Domain;
 
-namespace DynamicObjectApi.Middlewares;
+namespace DynamicObjectApi.Application;
 
 public class ExceptionHandlingMiddleware(RequestDelegate next){
     public async Task InvokeAsync(HttpContext context){

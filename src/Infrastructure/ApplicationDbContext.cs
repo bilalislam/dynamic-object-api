@@ -1,8 +1,8 @@
 using System.Text.Json;
-using DynamicObjectApi.Models;
+using DynamicObjectApi.Domain;
 using Microsoft.EntityFrameworkCore;
 
-namespace DynamicObjectAPI.Data{
+namespace DynamicObjectApi.Infrastructure{
     public class ApplicationDbContext : DbContext{
         public ApplicationDbContext(){
         }
