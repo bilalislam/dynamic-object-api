@@ -1,9 +1,9 @@
 # Dynamic Object Creation and Transaction Management API Challenge
 
 ### todo:
-1.[x] validation
-2.[x] error handling
-3.[x] unit testing
+- [x] validation
+- [x] error handling
+- [x] unit testing
 
 ### docker setup
 
