@@ -12,20 +12,20 @@ public class BusinessLogicService(IRuleEngineStrategy engineStrategy, Applicatio
     };
 
     public async Task ApplyBusinessRules(string objectType, JObject data){
+        switch (objectType){
+            case "order":
+                engineStrategy.SetRuleStrategy(new OrderEngine(context));
+                break;
+            case "product":
+                engineStrategy.SetRuleStrategy(new ProductEngine());
+                break;
+            default:
+                throw new InvalidOperationException("Invalid object type.");
+        }
+
         var rules = GetRulesForObjectType(objectType);
         if (rules != null){
             var ruleSet = rules["rules"];
-            switch (objectType){
-                case "order":
-                    engineStrategy.SetRuleStrategy(new OrderEngine(context));
-                    break;
-                case "product":
-                    engineStrategy.SetRuleStrategy(new ProductEngine());
-                    break;
-                default:
-                    throw new InvalidOperationException("Invalid object type.");
-            }
-
             await engineStrategy.ValidateRule(data, ruleSet);
         }
     }

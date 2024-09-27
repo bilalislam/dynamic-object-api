@@ -32,7 +32,7 @@ if (app.Environment.IsDevelopment()){
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseHttpsRedirection();
 
-app.MapGet($"objects/{{id:int}}/type/{{type}}",
+app.MapGet("objects/{id:int}/type/{type}",
         async (int id, string type,
             ApplicationDbContext context) => {
             return await context.Objects.FirstOrDefaultAsync(x => x.Id == id && x.ObjectType == type);

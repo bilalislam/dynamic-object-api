@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using DynamicObjectApi.Domain;
 using Microsoft.EntityFrameworkCore;
 
 namespace DynamicObjectApi.Infrastructure{
+    [ExcludeFromCodeCoverage]
     public class ApplicationDbContext : DbContext{
         public ApplicationDbContext(){
         }
